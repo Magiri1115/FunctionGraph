@@ -1,5 +1,5 @@
 # ベースイメージにJulia公式を使用
-FROM julia:1.10
+FROM julia:1.11.4
 
 # 必要なLinuxパッケージをインストール
 RUN apt-get update && \
