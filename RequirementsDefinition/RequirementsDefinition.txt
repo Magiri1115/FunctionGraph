@@ -1,0 +1,148 @@
+# 関数グラフ表示「MagiriFunctionGraph」要件定義書
+## システム概要
+関数のグラフを表示します。
+
+## システム名
+MagiriFunctionGraph
+
+## 機能要件
+1. グラフ表示機能
+2Dグラフおよび3Dグラフの表示をサポートする。
+計算結果を視覚的に確認できるようにする。
+Juliaを用いたグラフ生成を行い、C++側で表示する。
+
+## 技術要件
+フロントエンド: C++(Qt)
+バックエンド: Julia (Symbolics.jl, Calculus.jl,Plots.jl, Makie.jl, PlotlyJS.jl)
+開発環境:VSCode,Git (GitHub),GitHub Actions ,Docker
+
+## 画面設計
+数式入力欄
+計算ボタン
+グラフ表示エリア 
+2D,3Dグラフの表示
+エラーメッセージ表示領域
+
+## テスト計画
+ユニットテスト: 各コンポーネントの単体テスト
+結合テスト: C++とJulia間のデータ連携のテスト
+E2Eテスト: 入力→計算→グラフ表示の流れをテスト
+ユーザーテスト: 実際のユーザーによるUI,UXの評価
+
+## テストケース
+1. 計算テスト
+関数の評価（正常な入力）
+間違った入力に対するエラーハンドリング
+微積分の計算精度の確認
+2. グラフ描画テスト
+2D,3Dグラフが正しく描画されるか
+C++で正しく画像が読み込まれるか
+3. E2Eテスト
+ユーザーが入力して計算し、グラフを見るまでのシナリオテスト
+異常値入力時の挙動確認
+4. ユーザーテスト
+UIの使いやすさや表示の適切さを評価
+
+## テストツール
+ユニットテスト:
+Test.ji (Julia)
+Google Test (C++)
+
+## テスト環境
+CI,CD環境: GitHub Actionsを活用し、自動テストを実施
+
+## 端的な開発手順
+1. 環境構築: Qt, Julia, GitHub Actions のセットアップ
+2. C++ UI開発: Qt を用いて数式入力欄・ボタン・画像表示エリアを実装
+3. Julia計算機能: Symbolics.jl, Calculus.jl などを使用した関数評価・微積分処理を実装
+4. グラフ描画: Plots.jl, Makie.jl, PlotlyJS.jl などで2D・3Dグラフを描画
+5. データ連携: C++とJuliaのプロセス間通信（QProcess）を実装
+6. 統合テスト: 計算処理とグラフ描画の動作を確認
+7. ユーザーテスト: 実際のユーザーに試用してもらいフィードバックを得る
+8. リリース: 安定版をリリースし、継続的なメンテナンスを行う
+
+## C++側の実装
+1. UI作成
+Qt を使用してアプリのウィンドウ、ボタン、入力欄、グラフ表示領域を作成
+ユーザーが関数を入力できるようにする
+2. ユーザーの操作管理
+ユーザーが数式を入力し、「計算実行」ボタンを押したときにJuliaに処理を依頼
+計算結果を受け取って UI に表示
+3. Juliaとのデータ連携
+数式文字列を Julia に引数として渡し、計算結果やグラフ画像を受け取る（QProcess を使用）
+計算が失敗した場合、エラーメッセージを表示
+4. グラフの表示
+Juliaで生成したPNG画像を読み込み、UIに表示
+5. クロスプラットフォーム対応
+QtはWindows, macOS, Linux に対応しているため、各OS向けに適切なビルドを作成
+
+## Julia側の実装
+1. 数式の解析
+Symbolics.jl, SymPy.jl, ModelingToolkit.jlなどで数式を解析（文字列入力に対応）
+2. 計算処理
+式の評価、微積分、数値計算を実行（例：Calculus.jl, QuadGK.jl, ForwardDiff.jl）
+3. グラフ描画
+Plots.jl + GR or Makie.jl を用いて2D・3Dグラフ描画
+PlotlyJS.jl を使えばインタラクティブな出力も可能
+4. グラフの保存
+savefig("out.png") でPNG出力し、C++ 側で表示可能にする
+5. エラーハンドリング
+try-catch構文で例外処理し、標準エラー出力経由でC++に返す
+
+## C++とJuliaの連携方法
+1. C++（Qt）で数式を入力し、「計算実行」ボタンを押す
+2. QProcess を使ってJuliaスクリプトを起動（引数に数式を渡す）
+3. Julia側で数式を処理、計算や微積分、グラフ描画を実施
+4. savefig() で画像（PNG）保存し、そのパスを標準出力で返す
+5. C++ 側で画像をUIに読み込んで表示
+6. エラーが発生した場合、Juliaからエラーメッセージを標準エラー出力し、C++で表示
+7. ユーザーが再度入力して計算できるようにするループ処理を用意
+
+## ファイル構造
+
+FunctionGraph/
+├── RequirementsDefinition/              # 要件定義書（すでに存在）
+│
+├── CppApp/                              # C++ (Qt) 側アプリケーション
+│   ├── main.cpp                         # アプリケーションのエントリーポイント
+│   ├── UIController.cpp                 # UIイベントの処理（ボタン、入力等）
+│   ├── UIController.h                   # ↑ のヘッダ
+│   ├── GraphDisplay.cpp                 # 画像の表示ロジック
+│   ├── GraphDisplay.h
+│   ├── JuliaConnector.cpp              # Juliaとの連携（QProcess）
+│   ├── JuliaConnector.h
+│   ├── ErrorHandler.cpp                 # エラー表示制御
+│   ├── ErrorHandler.h
+│   ├── assets/
+│   │   └── placeholder.png              # 初期表示用画像など
+│   └── ui/
+│       └── MainWindow.ui                # Qt Designerで作ったUI定義（オプション）
+│
+├── JuliaBackend/                        # Julia 側の処理
+│   ├── Main.jl                          # Juliaのエントリーポイント
+│   ├── ExpressionParser.jl              # 数式の文字列解析（Symbolicsなど使用）
+│   ├── Calculator.jl                    # 評価・微積分処理
+│   ├── GraphPlotter2D.jl                # 2Dグラフ描画
+│   ├── GraphPlotter3D.jl                # 3Dグラフ描画
+│   ├── ResultExporter.jl                # 画像保存や出力制御
+│   └── ErrorHandler.jl                  # エラー処理・ログ出力
+│
+├── tests/                               # テスト用コード
+│   ├── cpp/
+│   │   ├── test_UIController.cpp
+│   │   ├── test_JuliaConnector.cpp
+│   │   └── test_GraphDisplay.cpp
+│   └── julia/
+│       ├── test_ExpressionParser.jl
+│       ├── test_Calculator.jl
+│       ├── test_GraphPlotter2D.jl
+│       └── test_GraphPlotter3D.jl
+│
+├── .github/                             # GitHub Actions 設定
+│   └── workflows/
+│       └── ci.yml                       # CI/CD自動テストワークフロー
+│
+├── Dockerfile                           # 開発・実行環境の構築用
+├── README.md                            # プロジェクト概要と使い方
+└── .gitignore                           # Git無視ファイル設定
+

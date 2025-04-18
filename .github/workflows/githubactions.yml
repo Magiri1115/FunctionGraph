@@ -1,0 +1,44 @@
+name: "GitHubActions"
+# ワークフローのトリガー
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# ワークフローのジョブ 
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: リポジトリのチェックアウト
+      uses: actions/checkout@v3
+
+    - name: 必要パッケージのインストール
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake qtbase5-dev g++ libgl1-mesa-dev
+        sudo apt-get install -y julia
+        julia --version
+
+    - name: Juliaパッケージの準備
+      working-directory: ./JuliaBackend
+      run: |
+        julia -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()'
+
+    - name: Juliaユニットテスト
+      working-directory: ./JuliaBackend
+      run: |
+        julia -e 'using Pkg; Pkg.activate("."); Pkg.test()'
+
+    - name: C++ビルド
+      working-directory: ./CppApp
+      run: |
+        mkdir -p build && cd build
+        cmake .. && make
+
+    - name: C++ユニットテスト
+      working-directory: ./CppApp/build
+      run: |
+        ctest --output-on-failure
